@@ -60,7 +60,7 @@
                   score = len(laugh)
 
                   # 10x bonus if is in upper case
-                  if laugh.isupper():
+                  if all(map(str.isupper, laugh)):
                       score *= 10
 
                   # from now, we're going to ignore if it's upper or lower case
