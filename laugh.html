@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+  </head>
+
+  <body>
+    <p>
+      Analiza una risa
+    </p>
+    <input id="code" value="" oninput="evaluatePython()" />
+    <br />
+    <br />
+    <div>Output:</div>
+    <textarea id="output" style="width: 100%;" rows="6" disabled></textarea>
+
+    <script>
+      const output = document.getElementById("output");
+      const code = document.getElementById("code");
+
+      function addToOutput(s) {
+        output.value = s
+      }
+
+      // init Pyodide
+      async function main() {
+        let pyodide = await loadPyodide();
+        pyodide.globals.set("laugh", code);
+        return pyodide;
+      }
+      let pyodideReadyPromise = main();
+
+      async function evaluatePython() {
+        let pyodide = await pyodideReadyPromise;
+        try {
+          let output = pyodide.runPython(`
+              def determine_laugh_points(laugh: str) -> int:
+                  if " " in laugh:
+                      raise ValueError("invalid laugh")
+
+                  if len(laugh) < 4:
+                      return 0
+
+                  # the longer is the laugh, the better
+                  score = len(laugh)
+
+                  # 10x bonus if is in upper case
+                  if laugh.isupper():
+                      score *= 10
+
+                  # from now, we're going to ignore if it's upper or lower case
+                  #  by converting it to lower case
+                  laugh = laugh.lower()
+
+                  # the more different letters used (other than "j" and "a"), the better
+                  used_letters = set(laugh)
+                  used_letters.discard("j")
+                  used_letters.discard("a")
+                  score += 25 * len(used_letters)
+
+                  # less points per regular "ja"
+                  score -= 1.2 * laugh.count("ja")
+
+                  return int(score)
+
+              determine_laugh_points("${code.value}")
+          `);
+          addToOutput(output);
+        } catch (err) {
+          addToOutput(err);
+        }
+      }
+    </script>
+  </body>
+</html>
